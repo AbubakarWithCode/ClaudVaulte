@@ -1,0 +1,258 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile, subscription plan and storage quota tracking",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Authentication UID of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar URL of the user"
+        },
+        "storageUsed": {
+          "type": "number",
+          "description": "Total bytes consumed by the user"
+        },
+        "storageLimit": {
+          "type": "number",
+          "description": "Total storage capacity in bytes (5GB = 5368709120, 100GB = 107374182400, 1TB = 1099511627776)"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Assigned subscription plan (free, pro, business)"
+        },
+        "planStatus": {
+          "type": "string",
+          "description": "Status of the subscription plan (active, pending, expired)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation ISO timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update ISO timestamp"
+        }
+      },
+      "required": ["userId", "email", "displayName", "storageUsed", "storageLimit", "createdAt"]
+    },
+    "UpgradeRequest": {
+      "title": "UpgradeRequest",
+      "description": "Subscription storage upgrade and payment request",
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "description": "Unique identifier of the upgrade request"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the requester"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email address of requester"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Display name of requester"
+        },
+        "planId": {
+          "type": "string",
+          "description": "Target plan ID (pro, business)"
+        },
+        "planName": {
+          "type": "string",
+          "description": "Display label of the target plan"
+        },
+        "storageBytes": {
+          "type": "number",
+          "description": "Storage capacity in bytes to grant upon approval"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount paid for the subscription"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (PKR, USD)"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment channel (easypaisa, jazzcash, sadapay, bank, card)"
+        },
+        "trxId": {
+          "type": "string",
+          "description": "Transaction identification reference code"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or account sender info"
+        },
+        "status": {
+          "type": "string",
+          "description": "Approval status (pending, approved, rejected)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Request creation ISO timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last status update ISO timestamp"
+        }
+      },
+      "required": ["requestId", "userId", "userEmail", "planId", "storageBytes", "amount", "currency", "paymentMethod", "trxId", "status", "createdAt"]
+    },
+    "FileItem": {
+      "title": "FileItem",
+      "description": "Metadata for an uploaded file",
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string",
+          "description": "Unique identifier of the file document"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the owner user"
+        },
+        "name": {
+          "type": "string",
+          "description": "File display name"
+        },
+        "originalName": {
+          "type": "string",
+          "description": "Original file name on upload"
+        },
+        "size": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "type": {
+          "type": "string",
+          "description": "MIME type of the file"
+        },
+        "extension": {
+          "type": "string",
+          "description": "File extension lowercase"
+        },
+        "folderId": {
+          "type": "string",
+          "description": "Folder ID containing this file, or root"
+        },
+        "downloadURL": {
+          "type": "string",
+          "description": "Download or view URL for the file"
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Firebase Cloud Storage path"
+        },
+        "isShared": {
+          "type": "boolean",
+          "description": "Whether the file is publicly shared via link"
+        },
+        "sharePermission": {
+          "type": "string",
+          "description": "Share permission mode (view or download)"
+        },
+        "shareToken": {
+          "type": "string",
+          "description": "Unique secret token for public sharing"
+        },
+        "isStarred": {
+          "type": "boolean",
+          "description": "Whether the file is marked as favorite/starred"
+        },
+        "isTrash": {
+          "type": "boolean",
+          "description": "Whether file is currently in trash"
+        },
+        "deletedAt": {
+          "type": "string",
+          "description": "Timestamp when moved to trash"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Upload ISO timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update ISO timestamp"
+        }
+      },
+      "required": ["fileId", "userId", "name", "size", "type", "folderId", "downloadURL", "isTrash", "createdAt"]
+    },
+    "FolderItem": {
+      "title": "FolderItem",
+      "description": "Metadata for a user folder",
+      "type": "object",
+      "properties": {
+        "folderId": {
+          "type": "string",
+          "description": "Unique identifier of the folder"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the folder owner"
+        },
+        "name": {
+          "type": "string",
+          "description": "Folder display name"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Parent folder ID or root"
+        },
+        "color": {
+          "type": "string",
+          "description": "Accent color for the folder icon"
+        },
+        "isTrash": {
+          "type": "boolean",
+          "description": "Whether the folder is in the trash"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation ISO timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update ISO timestamp"
+        }
+      },
+      "required": ["folderId", "userId", "name", "parentId", "isTrash", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user account profile, storage limits, and current usage"
+    },
+    "/upgradeRequests/{requestId}": {
+      "schema": "UpgradeRequest",
+      "description": "Stores user plan upgrade requests, payments and admin approval queue"
+    },
+    "/files/{fileId}": {
+      "schema": "FileItem",
+      "description": "Stores user file records, metadata, storage references, and sharing state"
+    },
+    "/folders/{folderId}": {
+      "schema": "FolderItem",
+      "description": "Stores user directory hierarchy and folder metadata"
+    }
+  }
+}

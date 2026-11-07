@@ -1,0 +1,158 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (request.auth.token.email == 'abubakartaj69@gmail.com' || request.auth.token.email == 'abubakartaj69@gmail.com');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Connection testing endpoint
+    match /test/{docId} {
+      allow get: if true;
+    }
+
+    // User Profile Validation & Rules
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() <= 128
+        && data.email is string && data.email.size() <= 256
+        && data.displayName is string && data.displayName.size() <= 128
+        && (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1024))
+        && data.storageUsed is number && data.storageUsed >= 0
+        && data.storageLimit is number && data.storageLimit > 0 && data.storageLimit <= 10995116277760
+        && (!('plan' in data) || (data.plan is string && data.plan.size() <= 32))
+        && (!('planStatus' in data) || (data.planStatus is string && data.planStatus.size() <= 32))
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if (isOwner(userId) || isAdmin())
+        && isValidUserProfile(incoming())
+        && incoming().userId == userId;
+      allow update: if (isOwner(userId) || isAdmin())
+        && isValidUserProfile(incoming())
+        && incoming().userId == existing().userId;
+      allow delete: if isAdmin();
+    }
+
+    // Upgrade & Subscription Requests Validation
+    function isValidUpgradeRequest(data) {
+      return data.requestId is string && data.requestId.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.userEmail is string && data.userEmail.size() <= 256
+        && (!('userName' in data) || (data.userName is string && data.userName.size() <= 128))
+        && data.planId is string && data.planId.size() <= 32
+        && (!('planName' in data) || (data.planName is string && data.planName.size() <= 64))
+        && data.storageBytes is number && data.storageBytes > 0
+        && data.amount is number && data.amount >= 0
+        && data.currency is string && data.currency.size() <= 10
+        && data.paymentMethod is string && data.paymentMethod.size() <= 32
+        && data.trxId is string && data.trxId.size() <= 128
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 512))
+        && data.status is string && data.status.size() <= 32
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    match /upgradeRequests/{requestId} {
+      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn()
+        && incoming().userId == request.auth.uid
+        && isValidUpgradeRequest(incoming());
+      allow update: if (isOwner(existing().userId) || isAdmin())
+        && isValidUpgradeRequest(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Files Validation & Rules
+    function isValidFile(data) {
+      return data.fileId is string && data.fileId.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 255
+        && (!('originalName' in data) || (data.originalName is string && data.originalName.size() <= 255))
+        && data.size is number && data.size >= 0
+        && data.type is string && data.type.size() <= 128
+        && (!('extension' in data) || (data.extension is string && data.extension.size() <= 32))
+        && data.folderId is string && data.folderId.size() <= 128
+        && data.downloadURL is string && data.downloadURL.size() <= 1048576
+        && (!('storagePath' in data) || (data.storagePath is string && data.storagePath.size() <= 1024))
+        && (!('isShared' in data) || data.isShared is bool)
+        && (!('sharePermission' in data) || (data.sharePermission is string && data.sharePermission.size() <= 32))
+        && (!('shareToken' in data) || (data.shareToken is string && data.shareToken.size() <= 128))
+        && (!('isStarred' in data) || data.isStarred is bool)
+        && data.isTrash is bool
+        && (!('deletedAt' in data) || data.deletedAt == null || (data.deletedAt is string && data.deletedAt.size() <= 64))
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    match /files/{fileId} {
+      allow get: if (resource.data.isShared == true) || isOwner(resource.data.userId) || isAdmin();
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn()
+        && incoming().userId == request.auth.uid
+        && isValidFile(incoming());
+      allow update: if isSignedIn()
+        && (isOwner(existing().userId) || isAdmin())
+        && isValidFile(incoming())
+        && incoming().userId == existing().userId
+        && incoming().fileId == existing().fileId;
+      allow delete: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
+    }
+
+    // Folders Validation & Rules
+    function isValidFolder(data) {
+      return data.folderId is string && data.folderId.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 255
+        && data.parentId is string && data.parentId.size() <= 128
+        && (!('color' in data) || (data.color is string && data.color.size() <= 32))
+        && data.isTrash is bool
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    match /folders/{folderId} {
+      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn()
+        && incoming().userId == request.auth.uid
+        && isValidFolder(incoming());
+      allow update: if isSignedIn()
+        && (isOwner(existing().userId) || isAdmin())
+        && isValidFolder(incoming())
+        && incoming().userId == existing().userId
+        && incoming().folderId == existing().folderId;
+      allow delete: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
+    }
+  }
+}
